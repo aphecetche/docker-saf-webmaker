@@ -33,17 +33,24 @@ RUN cd /tmp && \
     source scl_source enable python27 && \
     pip install --upgrade pip && \
     pip install matplotlib numpy certifi ipython ipywidgets ipykernel notebook metakernel pyyaml alibuild && \
-    mkdir -p $HOME/alice/sw && \
-    cd $HOME/alice && \
-    source scl_source enable python27 && \
-    aliBuild init && \
-    aliBuild build ROOT
+    mkdir -p alice/sw
+
+COPY bashrc /root/.bashrc
 
 # FPM (the thing that will create the RPM) depends on a decent ruby version
-RUN curl -sSL https://rvm.io/mpapis.asc | gpg --import - && \
-    curl -L get.rvm.io | bash -s stable && \
-    source /etc/profile.d/rvm.sh && \
+
+RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB && \
+    echo 'export rvm_prefix="$HOME"' > /root/.rvmrc && \
+    echo 'export rvm_path="$HOME/.rvm"' >> /root/.rvmrc && \
+    curl -L get.rvm.io | bash -s stable
+
+RUN source $HOME/.bashrc &&  \ 
+    echo $PATH && \
     rvm reload && \
     rvm requirements run && \
     rvm install 2.4.2 && \
-    gem install --no-ri --no-rdoc fpm 
+    rvm 2.4.2 do gem install --no-ri --no-rdoc fpm 
+
+RUN mkdir -p /alice/sw
+
+RUN echo 'source $(rvm 2.4.2 do rvm env --path)' >> /root/.bashrc
